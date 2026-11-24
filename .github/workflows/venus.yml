@@ -1,0 +1,45 @@
+name: Venus Phase 1
+
+on:
+  workflow_dispatch: {}          # started by cron-job.org every 15 minutes on market days, or by hand
+
+permissions:
+  contents: write                # lets the job save its memory (state folder)
+
+concurrency:
+  group: venus-scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TZ: Asia/Kolkata
+      FYERS_APP_ID: ${{ secrets.FYERS_APP_ID }}
+      FYERS_ACCESS_TOKEN: ${{ secrets.FYERS_ACCESS_TOKEN }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      FYERS_PLAN: standard        # write prime here if you are on the Prime plan
+      MIN_LTP: "5"                # ignore options priced below Rs 5 (write 0 to switch off)
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install packages
+        run: pip install -r requirements.txt
+
+      - name: Run Venus Phase 1
+        run: python cloud_run.py
+
+      - name: Save memory (state folder)
+        if: always()
+        run: |
+          git config user.name "venus-bot"
+          git config user.email "venus-bot@users.noreply.github.com"
+          git add state
+          git diff --cached --quiet || (git commit -m "venus state" && git pull --rebase && git push)

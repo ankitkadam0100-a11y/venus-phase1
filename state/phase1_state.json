@@ -1,6 +1,6 @@
 {
- "alerts": 22,
- "calls": 2995,
+ "alerts": 24,
+ "calls": 3213,
  "date": "2026-11-25",
  "fired": [
   "NSE:TCS26DEC2520PE|1h|2026-11-23 15:15:00",
@@ -33,10 +33,12 @@
   "NSE:RELIANCE26DEC1370PE|1h|2026-11-25 11:15:00",
   "NSE:RELIANCE26DEC1320PE|1h|2026-11-25 11:15:00",
   "NSE:RELIANCE26DEC1380PE|1h|2026-11-25 11:15:00",
-  "NSE:INFY26DEC1074PE|1h|2026-11-25 11:15:00"
+  "NSE:INFY26DEC1074PE|1h|2026-11-25 11:15:00",
+  "NSE:INFY26DEC1094PE|1h|2026-11-25 12:15:00",
+  "NSE:INFY26DEC1080PE|1h|2026-11-25 12:15:00"
  ],
  "limit_alert": false,
- "scans": 15,
+ "scans": 16,
  "status_sent": true,
  "token_alert": false
 }

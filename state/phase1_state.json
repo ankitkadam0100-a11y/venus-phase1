@@ -1,6 +1,6 @@
 {
  "alerts": 18,
- "calls": 1538,
+ "calls": 1742,
  "date": "2026-11-25",
  "fired": [
   "NSE:TCS26DEC2520PE|1h|2026-11-23 15:15:00",
@@ -32,7 +32,7 @@
   "NSE:ICICIBANK26DEC1590PE|1h|2026-11-25 10:15:00"
  ],
  "limit_alert": false,
- "scans": 8,
+ "scans": 9,
  "status_sent": true,
  "token_alert": false
 }

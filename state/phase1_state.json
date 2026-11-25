@@ -1,0 +1,13 @@
+{
+ "alerts": 2,
+ "calls": 178,
+ "date": "2026-11-25",
+ "fired": [
+  "NSE:TCS26DEC2520PE|1h|2026-11-23 15:15:00",
+  "NSE:TCS26DEC2420PE|1h|2026-11-23 15:15:00"
+ ],
+ "limit_alert": false,
+ "scans": 1,
+ "status_sent": true,
+ "token_alert": false
+}

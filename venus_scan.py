@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
 """
-Venus Phase 1 - SINGLE-PASS scanner. Runs once per 15-minute candle (on GitHub, or on your PC), then exits.
-Places no orders. Alert only.
+Venus Phase 1 - SINGLE-PASS scanner (Independent 15m / 30m / 1h Heikin Ashi signals).
+Runs once per 15-minute candle (on GitHub, or on your PC), then exits. Places no orders. Alert only.
 
-Same rule as your original main.py:
-  a symbol qualifies when 15m, 30m AND 1h are all bearish (EMA50 > EMA20 and Supertrend(10,3) red,
-  on Heikin Ashi), at least one of them has just flipped on its last closed candle, and the option is liquid.
+Rule:
+  Each timeframe (15m, 30m, 1h) is evaluated INDEPENDENTLY on closed Heikin Ashi candles.
+  Whenever ANY timeframe has EMA50 > EMA20 and Supertrend(10,3) red AND just flipped bearish
+  on its last closed candle (and the contract passes liquidity + MIN_LTP), an alert fires once.
 
-What is different (and why):
-  * Liquidity is checked FIRST with batched quotes (50 symbols per call), so history is fetched only for
-    liquid contracts.  Timeframes are checked 1h -> 30m -> 15m and stop at the first one that is not bearish.
-    Result: the same alerts with roughly 1/4 of the API calls (Fyers' free plan allows 50 calls a minute).
-  * Calls are paced to stay inside the plan limits, and a daily call budget is enforced.
-  * What it already sent is remembered in state/phase1_state.json (survives between runs).
-  * Alerts go to Telegram and to state/Live_Alerts.csv (same columns as before).
-  * All times are India time, whatever the computer's clock says.
+API efficiency (Fyers Standard: 50/min, 5,000/day):
+  * Liquidity is checked FIRST with batched quotes (50 symbols per call).
+  * One 60-day 15m history call is fetched per liquid symbol; exact 09:15 IST-anchored
+    30m and 1h candles are resampled from it in memory (1 API call instead of 3).
 """
 import csv
 import json
@@ -22,7 +19,7 @@ import os
 import sys
 import time
 from collections import deque
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import pandas as pd
 
@@ -41,11 +38,13 @@ PACE = os.getenv("PACE", "1") == "1"                    # PACE=0 only for tests
 MIN_LTP = float(os.getenv("MIN_LTP", "5"))              # ignore options priced below this (Rs); 0 = off
 CHARTS = os.getenv("CHARTS", "1") == "1"                # send a 3-panel chart with each alert
 MAX_CHARTS = int(os.getenv("MAX_CHARTS", "5"))          # charts per scan (the rest are listed as text)
+HISTORY_DAYS = int(os.getenv("HISTORY_DAYS", "60"))     # single 15m fetch (Fyers allows up to 100 days)
 
 # Stay safely below Fyers' published limits (Standard: 5/s, 50/min, 5,000/day; Prime: 10/s, 500/min, 500,000/day)
 LIMITS = {"standard": {"per_sec": 4, "per_min": 45, "per_day": 4500, "quote_batch": 50},
           "prime": {"per_sec": 8, "per_min": 450, "per_day": 400000, "quote_batch": 500}}
-HISTORY = (("1h", "60", 60), ("30m", "30", 40), ("15m", "15", 25))     # name, resolution, days back (as before)
+# Kept for compatibility with send_test_chart.py / helper scripts
+HISTORY = (("1h", "60", 60), ("30m", "30", 40), ("15m", "15", 25))
 
 
 class TokenExpired(Exception):
@@ -134,7 +133,7 @@ def log_alert(candle_time, symbol, ltp, spread, volume, trigger_msg):
         if new:
             w.writerow(["Timestamp", "Symbol", "LTP", "Spread", "Volume", "Setup"])
         w.writerow([candle_time, symbol, round(ltp, 2), round(spread, 2), volume,
-                    f"Bearish Alignment (Trigger: {trigger_msg})"])
+                    f"Bearish HA Signal (Trigger: {trigger_msg})"])
 
 
 # ----------------------------------------------------------------- data
@@ -148,6 +147,30 @@ def history_df(api, symbol, resolution, days_back, now):
         df = df[df["Datetime"] <= now.timestamp()]            # candles that have not started yet do not exist (replays)
         return df.reset_index(drop=True) if len(df) else None
     return None
+
+
+def resample_ohlcv(df_15m, res_min):
+    """Build exact NSE/BSE 30m or 1h OHLCV candles from 15m candles (anchored at 09:15 IST)."""
+    if df_15m is None or df_15m.empty:
+        return None
+    d = strategy.clean_candles(df_15m)
+    if d.empty:
+        return None
+    buckets = []
+    for raw_t in d["Datetime"]:
+        dt = strategy._to_dt(raw_t)
+        offset = (dt.hour * 60 + dt.minute) - (9 * 60 + 15)
+        b_min = (offset // res_min) * res_min
+        b_dt = dt.replace(hour=9, minute=15, second=0, microsecond=0) + timedelta(minutes=b_min)
+        buckets.append(int(b_dt.replace(tzinfo=vc.IST).timestamp()))
+    g = d.assign(_bucket=buckets).groupby("_bucket", sort=True, as_index=False).agg(
+        Open=("Open", "first"),
+        High=("High", "max"),
+        Low=("Low", "min"),
+        Close=("Close", "last"),
+        Volume=("Volume", "sum"),
+    )
+    return g.rename(columns={"_bucket": "Datetime"})
 
 
 def market_closed_today(api, now):
@@ -185,27 +208,36 @@ def scan(api, watch, state, now):
             ok, ltp, spread, vol = liquidity.judge_quote(q.get("v", {}), "NIFTY" in sym or "SENSEX" in sym)
             if ok and ltp >= MIN_LTP:
                 liquid[sym] = (ltp, spread, vol)
-    # 2) timeframe gates, stopping at the first one that is not bearish
+
+    # 2) evaluate 1h, 30m, and 15m INDEPENDENTLY from a single 15m fetch per liquid symbol
     found = []
     for sym in watch:
         if sym not in liquid:
             continue
-        tfs, dfs = {}, {}
-        for name, res, days in HISTORY:
-            df = history_df(api, sym, res, days, now)
-            r = strategy.analyse(df, int(res), naive_now) if df is not None else None
-            if r is None or not r["bearish"]:
-                tfs = None
-                break
-            tfs[name] = r
-            dfs[name] = (int(res), df)
-        if tfs is None:
+        df_15m = history_df(api, sym, "15", HISTORY_DAYS, now)
+        if df_15m is None:
             continue
-        new = [(n, tfs[n]["candle_time"]) for n in ("1h", "30m", "15m")
-               if tfs[n]["fresh"] and f"{sym}|{n}|{tfs[n]['candle_time']}" not in state["fired"]]
+        dfs = {
+            "1h": (60, resample_ohlcv(df_15m, 60)),
+            "30m": (30, resample_ohlcv(df_15m, 30)),
+            "15m": (15, df_15m),
+        }
+        tfs = {}
+        new = []
+        for name in ("1h", "30m", "15m"):
+            res, df = dfs[name]
+            r = strategy.analyse(df, res, naive_now) if df is not None else None
+            if r is None:
+                continue
+            tfs[name] = r
+            if r["fresh"] and f"{sym}|{name}|{r['candle_time']}" not in state["fired"]:
+                new.append((name, r["candle_time"]))
         if not new:
             continue
-        found.append((sym, new, tfs["15m"]["candle_time"], liquid[sym], dfs, {n: tfs[n]["fresh"] for n in tfs}))
+        # Show the finest triggered timeframe's closed candle time (new is ordered 1h, 30m, 15m)
+        candle_time = new[-1][1]
+        fresh_map = {n: any(t == n for t, _ in new) for n in ("1h", "30m", "15m")}
+        found.append((sym, new, candle_time, liquid[sym], dfs, fresh_map))
     return found, len(liquid)
 
 
@@ -236,8 +268,8 @@ def run():
             trig = "/".join(n for n, _ in new)
             lines.append((sym, new, candle, ltp, spread, vol, trig, dfs, fresh))
         if lines:
-            head = (f"VENUS PHASE 1 | bearish alignment | scan {now:%H:%M} IST | {len(lines)} alert(s)")
-            body = [f"{s} | LTP {l:g} | spread {sp:g} | vol {v:,} | trigger {t} | 15m candle {c[11:16]}"
+            head = f"VENUS PHASE 1 | Heikin Ashi bearish | scan {now:%H:%M} IST | {len(lines)} alert(s)"
+            body = [f"{s} | LTP {l:g} | spread {sp:g} | vol {v:,} | TF {t} | candle {c[11:16]}"
                     for s, _, c, l, sp, v, t, _d, _f in lines]
             if vc.send_telegram(head + "\n" + "\n".join(body)):
                 for s, new, c, l, sp, v, t, _d, _f in lines:
@@ -249,8 +281,8 @@ def run():
                     for s, new, c, l, sp, v, t, dfs_, fresh_ in lines[:MAX_CHARTS]:
                         try:
                             png = venus_chart.make_chart(s, l, dfs_, fresh_, now)
-                            vc.send_photo(png, f"{s} | LTP {l:g} | spread {sp:g} | vol {v:,} | trigger {t} | 15m candle {c[11:16]}")
-                            try:                                    # saving a copy is optional; it must never block the alert
+                            vc.send_photo(png, f"{s} | LTP {l:g} | spread {sp:g} | vol {v:,} | TF {t} | candle {c[11:16]}")
+                            try:
                                 os.makedirs("charts", exist_ok=True)
                                 with open(os.path.join("charts", f"{s.split(':')[-1]}_{c[11:16].replace(':', '')}.png"), "wb") as fh:
                                     fh.write(png)
@@ -263,8 +295,8 @@ def run():
             else:
                 print("[!] alerts not delivered - they will be retried on the next run")
         if not state.get("status_sent"):
-            if vc.send_telegram(f"Venus Phase 1 is running. Watching {len(watch)} contracts, {n_liquid} liquid now. "
-                                f"API calls this scan: {api.session_calls}."):
+            if vc.send_telegram(f"Venus Phase 1 is running (independent 15m/30m/1h HA). Watching {len(watch)} contracts, "
+                                f"{n_liquid} liquid now. API calls this scan: {api.session_calls}."):
                 state["status_sent"] = True
         print(f"scan done: {len(watch)} watched, {n_liquid} liquid, {len(found)} alerts, "
               f"{api.session_calls} calls ({state['calls']} today)")

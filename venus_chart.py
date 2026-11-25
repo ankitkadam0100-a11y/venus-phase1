@@ -4,7 +4,6 @@ Supertrend(10,3) (green = up, red = down), EMA20 (light green) and EMA50 (red).
 Uses exactly the same candle cleaning and indicator code as the scanner, so the picture matches the alert.
 """
 import io
-from datetime import datetime
 
 import numpy as np
 
@@ -57,8 +56,14 @@ def supertrend_line(h, l, c, length=strategy.ST_LEN, mult=strategy.ST_MULT):
 
 
 def _prepare(df, res, now):
+    if df is None or df.empty:
+        return None
     d = strategy.clean_candles(df)
+    if d.empty:
+        return None
     d = strategy.drop_open_candle(d, res, now).reset_index(drop=True)
+    if d.empty:
+        return None
     ha = strategy.heikin_ashi(d)
     hc = ha["Close"].to_numpy()
     e20, e50 = strategy.ema(hc, 20), strategy.ema(hc, 50)
@@ -67,8 +72,22 @@ def _prepare(df, res, now):
     return ha, e20, e50, st_dir, st_line, times
 
 
+def _fmt(val):
+    return f"{val:.2f}" if not np.isnan(val) else "n/a"
+
+
 def _panel(ax, name, res, df, now, fresh):
-    ha, e20, e50, st_dir, st_line, times = _prepare(df, res, now)
+    prep = _prepare(df, res, now)
+    if prep is None:
+        ax.set_facecolor(BG)
+        ax.text(0.5, 0.5, f"{name}  |  not enough closed candles", transform=ax.transAxes,
+                ha="center", va="center", color=FG, fontsize=9)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        for sp in ax.spines.values():
+            sp.set_color(GRID)
+        return
+    ha, e20, e50, st_dir, st_line, times = prep
     n = len(ha)
     lo_i = max(0, n - SHOW[name])
     idx = list(range(lo_i, n))
@@ -106,9 +125,16 @@ def _panel(ax, name, res, df, now, fresh):
     ax.set_xlim(lo_i - 1, n + 2)
     last = n - 1
     ax.axvline(last, ls="--", color="#787b86", lw=0.8, zorder=1)
-    tag = "FRESH FLIP" if fresh else "bearish"
+    is_bear = (not np.isnan(e20[-1]) and not np.isnan(e50[-1]) and not np.isnan(st_dir[-1])
+               and e50[-1] > e20[-1] and st_dir[-1] == -1)
+    if fresh:
+        tag, tag_col = "FRESH FLIP (BEARISH)", "#f0b90b"
+    elif is_bear:
+        tag, tag_col = "bearish", "#ef5350"
+    else:
+        tag, tag_col = "bullish / neutral", "#9aa0a6"
     ax.text(0.995, 0.96, tag, transform=ax.transAxes, ha="right", va="top", fontsize=9, fontweight="bold",
-            color="#f0b90b" if fresh else "#9aa0a6")
+            color=tag_col)
     ticks = list(range(lo_i, n, 8))
     labels, prev_day = [], None
     for t in ticks:
@@ -123,7 +149,7 @@ def _panel(ax, name, res, df, now, fresh):
     for sp in ax.spines.values():
         sp.set_color(GRID)
     ax.set_facecolor(BG)
-    ax.set_title(f"{name}  |  Heikin Ashi  |  EMA20 {e20[-1]:.2f}  EMA50 {e50[-1]:.2f}  Supertrend {st_line[-1]:.2f}",
+    ax.set_title(f"{name}  |  Heikin Ashi  |  EMA20 {_fmt(e20[-1])}  EMA50 {_fmt(e50[-1])}  Supertrend {_fmt(st_line[-1])}",
                  color=FG, fontsize=8.5, loc="left")
 
 
@@ -137,7 +163,9 @@ def make_chart(symbol, ltp, dfs, fresh, now):
     for ax, name in zip(axes, ("1h", "30m", "15m")):
         res, df = dfs[name]
         _panel(ax, name, res, df, naive, fresh.get(name, False))
-    fig.suptitle(f"{symbol}   LTP {ltp:g}   |   bearish alignment on 1h / 30m / 15m", color=FG,
+    trig_list = [n for n in ("1h", "30m", "15m") if fresh.get(n)]
+    trig_text = " / ".join(trig_list) if trig_list else "test chart"
+    fig.suptitle(f"{symbol}   LTP {ltp:g}   |   Heikin Ashi Bearish Signal: {trig_text}", color=FG,
                  fontsize=11, fontweight="bold", x=0.02, ha="left")
     fig.legend(handles=[Line2D([0], [0], color="#c0392b", lw=2, label="Supertrend red (down)"),
                         Line2D([0], [0], color="#1e9e52", lw=2, label="Supertrend green (up)"),

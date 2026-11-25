@@ -1,6 +1,6 @@
 {
  "alerts": 22,
- "calls": 2569,
+ "calls": 2781,
  "date": "2026-11-25",
  "fired": [
   "NSE:TCS26DEC2520PE|1h|2026-11-23 15:15:00",
@@ -36,7 +36,7 @@
   "NSE:INFY26DEC1074PE|1h|2026-11-25 11:15:00"
  ],
  "limit_alert": false,
- "scans": 13,
+ "scans": 14,
  "status_sent": true,
  "token_alert": false
 }

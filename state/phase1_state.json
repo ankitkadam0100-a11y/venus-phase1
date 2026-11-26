@@ -1,6 +1,6 @@
 {
- "alerts": 32,
- "calls": 2365,
+ "alerts": 33,
+ "calls": 2535,
  "date": "2026-11-26",
  "fired": [
   "NSE:TCS26DEC2520PE|1h|2026-11-23 15:15:00",
@@ -70,10 +70,11 @@
   "NSE:AXISBANK26DEC1430CE|15m|2026-11-26 12:15:00",
   "NSE:AXISBANK26DEC1440CE|15m|2026-11-26 12:15:00",
   "NSE:AXISBANK26DEC1410CE|15m|2026-11-26 12:30:00",
-  "NSE:AXISBANK26DEC1420CE|15m|2026-11-26 12:30:00"
+  "NSE:AXISBANK26DEC1420CE|15m|2026-11-26 12:30:00",
+  "NSE:AXISBANK26DEC1400CE|15m|2026-11-26 12:45:00"
  ],
  "limit_alert": false,
- "scans": 14,
+ "scans": 15,
  "status_sent": true,
  "token_alert": false
 }

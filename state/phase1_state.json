@@ -1,6 +1,6 @@
 {
- "alerts": 6,
- "calls": 497,
+ "alerts": 8,
+ "calls": 667,
  "date": "2026-11-26",
  "fired": [
   "NSE:TCS26DEC2520PE|1h|2026-11-23 15:15:00",
@@ -44,10 +44,12 @@
   "NSE:INFY26DEC1160PE|1h|2026-11-25 15:15:00",
   "BSE:SENSEX26NOV84300CE|15m|2026-11-26 09:30:00",
   "BSE:SENSEX26NOV84200CE|15m|2026-11-26 09:30:00",
-  "NSE:SBIN26DEC1110CE|15m|2026-11-26 09:45:00"
+  "NSE:SBIN26DEC1110CE|15m|2026-11-26 09:45:00",
+  "NSE:HDFCBANK26DEC860PE|1h|2026-11-26 09:15:00",
+  "NSE:BHARTIARTL26DEC2140CE|1h|2026-11-26 09:15:00"
  ],
  "limit_alert": false,
- "scans": 3,
+ "scans": 4,
  "status_sent": true,
  "token_alert": false
 }

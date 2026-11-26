@@ -1,6 +1,6 @@
 {
  "alerts": 8,
- "calls": 667,
+ "calls": 836,
  "date": "2026-11-26",
  "fired": [
   "NSE:TCS26DEC2520PE|1h|2026-11-23 15:15:00",
@@ -49,7 +49,7 @@
   "NSE:BHARTIARTL26DEC2140CE|1h|2026-11-26 09:15:00"
  ],
  "limit_alert": false,
- "scans": 4,
+ "scans": 5,
  "status_sent": true,
  "token_alert": false
 }

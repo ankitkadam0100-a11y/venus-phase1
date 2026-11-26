@@ -1,6 +1,6 @@
 {
  "alerts": 64,
- "calls": 4049,
+ "calls": 4206,
  "date": "2026-11-26",
  "fired": [
   "NSE:TCS26DEC2520PE|1h|2026-11-23 15:15:00",
@@ -105,7 +105,7 @@
   "BSE:SENSEX26NOV84800CE|1h|2026-11-26 13:15:00"
  ],
  "limit_alert": false,
- "scans": 24,
+ "scans": 25,
  "status_sent": true,
  "token_alert": false
 }

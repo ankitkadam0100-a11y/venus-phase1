@@ -1,6 +1,6 @@
 {
- "alerts": 19,
- "calls": 1687,
+ "alerts": 21,
+ "calls": 1857,
  "date": "2026-11-26",
  "fired": [
   "NSE:TCS26DEC2520PE|1h|2026-11-23 15:15:00",
@@ -57,10 +57,12 @@
   "NSE:SBIN26DEC1120PE|15m|2026-11-26 11:15:00",
   "BSE:SENSEX26NOV84200CE|15m|2026-11-26 11:30:00",
   "NSE:SBIN26DEC1150PE|15m|2026-11-26 11:30:00",
-  "NSE:SBIN26DEC1140PE|15m|2026-11-26 11:30:00"
+  "NSE:SBIN26DEC1140PE|15m|2026-11-26 11:30:00",
+  "NSE:SBIN26DEC1170PE|15m|2026-11-26 11:45:00",
+  "NSE:SBIN26DEC1160PE|15m|2026-11-26 11:45:00"
  ],
  "limit_alert": false,
- "scans": 10,
+ "scans": 11,
  "status_sent": true,
  "token_alert": false
 }

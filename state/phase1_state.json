@@ -1,6 +1,6 @@
 {
  "alerts": 44,
- "calls": 2525,
+ "calls": 2695,
  "date": "2026-11-27",
  "fired": [
   "BSE:SENSEX26NOV82200PE|30m|2026-11-25 09:15:00",
@@ -150,7 +150,7 @@
   "BSE:SENSEX26D0384000CE|30m|2026-11-27 13:15:00"
  ],
  "limit_alert": false,
- "scans": 15,
+ "scans": 16,
  "status_sent": true,
  "token_alert": false
 }

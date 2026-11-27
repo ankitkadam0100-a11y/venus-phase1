@@ -1,6 +1,6 @@
 {
- "alerts": 34,
- "calls": 1342,
+ "alerts": 36,
+ "calls": 1511,
  "date": "2026-11-27",
  "fired": [
   "BSE:SENSEX26NOV82200PE|30m|2026-11-25 09:15:00",
@@ -137,10 +137,12 @@
   "NSE:NIFTY26D0125900CE|30m|2026-11-27 11:15:00",
   "NSE:NIFTY26D0125950CE|30m|2026-11-27 11:15:00",
   "NSE:NIFTY26D0126000CE|30m|2026-11-27 11:15:00",
-  "NSE:AXISBANK26DEC1390CE|30m|2026-11-27 11:15:00"
+  "NSE:AXISBANK26DEC1390CE|30m|2026-11-27 11:15:00",
+  "NSE:NIFTY26D0125850CE|30m|2026-11-27 11:45:00",
+  "NSE:BHARTIARTL26DEC2040CE|1h|2026-11-27 11:15:00"
  ],
  "limit_alert": false,
- "scans": 8,
+ "scans": 9,
  "status_sent": true,
  "token_alert": false
 }

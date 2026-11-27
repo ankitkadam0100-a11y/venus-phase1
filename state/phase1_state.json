@@ -1,6 +1,6 @@
 {
  "alerts": 36,
- "calls": 1511,
+ "calls": 1680,
  "date": "2026-11-27",
  "fired": [
   "BSE:SENSEX26NOV82200PE|30m|2026-11-25 09:15:00",
@@ -142,7 +142,7 @@
   "NSE:BHARTIARTL26DEC2040CE|1h|2026-11-27 11:15:00"
  ],
  "limit_alert": false,
- "scans": 9,
+ "scans": 10,
  "status_sent": true,
  "token_alert": false
 }

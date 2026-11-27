@@ -1,6 +1,6 @@
 {
- "alerts": 44,
- "calls": 3204,
+ "alerts": 46,
+ "calls": 3373,
  "date": "2026-11-27",
  "fired": [
   "BSE:SENSEX26NOV82200PE|30m|2026-11-25 09:15:00",
@@ -147,10 +147,12 @@
   "BSE:SENSEX26D0383800CE|30m|2026-11-27 13:15:00",
   "BSE:SENSEX26D0383900CE|30m|2026-11-27 13:15:00",
   "BSE:SENSEX26D0384200CE|30m|2026-11-27 13:15:00",
-  "BSE:SENSEX26D0384000CE|30m|2026-11-27 13:15:00"
+  "BSE:SENSEX26D0384000CE|30m|2026-11-27 13:15:00",
+  "NSE:RELIANCE26DEC1410CE|15m|2026-11-27 14:45:00",
+  "NSE:RELIANCE26DEC1420CE|15m|2026-11-27 14:45:00"
  ],
  "limit_alert": false,
- "scans": 19,
+ "scans": 20,
  "status_sent": true,
  "token_alert": false
 }

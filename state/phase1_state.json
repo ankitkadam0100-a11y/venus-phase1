@@ -1,6 +1,6 @@
 {
  "alerts": 34,
- "calls": 1174,
+ "calls": 1342,
  "date": "2026-11-27",
  "fired": [
   "BSE:SENSEX26NOV82200PE|30m|2026-11-25 09:15:00",
@@ -140,7 +140,7 @@
   "NSE:AXISBANK26DEC1390CE|30m|2026-11-27 11:15:00"
  ],
  "limit_alert": false,
- "scans": 7,
+ "scans": 8,
  "status_sent": true,
  "token_alert": false
 }

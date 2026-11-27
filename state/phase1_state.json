@@ -1,6 +1,6 @@
 {
  "alerts": 38,
- "calls": 1849,
+ "calls": 2018,
  "date": "2026-11-27",
  "fired": [
   "BSE:SENSEX26NOV82200PE|30m|2026-11-25 09:15:00",
@@ -144,7 +144,7 @@
   "NSE:NIFTY26D0125800CE|30m|2026-11-27 12:15:00"
  ],
  "limit_alert": false,
- "scans": 11,
+ "scans": 12,
  "status_sent": true,
  "token_alert": false
 }
